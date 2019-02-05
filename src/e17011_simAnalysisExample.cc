@@ -2137,7 +2137,7 @@ void e17011_simAnalysisExample::EndOfEventAction(const G4Event *evt)
     for(int x=0;x<72;x++){
       CloverE[x]=0;
     }
-    for(int x=0;x<9;x++){
+    for(int x=0;x<18;x++){
       CloverE_addback[x]=0;
     }
     

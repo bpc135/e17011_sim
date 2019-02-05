@@ -420,7 +420,7 @@ private:
   TH1D *hSegaab;  //Sega addback
   TH1D *hEnergyDepositClover[72];
   TH1D *hClover;
-  TH1D *hEnergyDepositClover_addback[9];
+  TH1D *hEnergyDepositClover_addback[18];
   TH1D *hClover_addback;
   TH1D *hClover_arrayadd;
   TH1D *hsega_tigress;

@@ -9,14 +9,3 @@
 /gui/addButton viewer "Flush viewer (= refresh + update)" "/vis/viewer/flush"
 /gui/addButton viewer "Update scene" "/vis/scene/notifyHandlers"
 
-
-#
-#/e16032_sim/det/setGeThickDetectorThickness 15 mm
-#/e16032_sim/det/setGeThinDetectorMate Vacuum
-#/e16032_sim/det/UseGeThickDetector false
-#/e16032_sim/det/UseGeThickDetectorCryo false
-#/e16032_sim/det/UseGeThickDetectorCryoEndCap false
-#/e16032_sim/det/UseGeThinDetector true
-/e16032_sim/det/UseSega false
-#/e16032_sim/det/UseClover false
-/e16032_sim/det/UseLaBr3 true
