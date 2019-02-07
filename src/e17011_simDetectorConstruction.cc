@@ -1086,23 +1086,27 @@ G4VPhysicalVolume* e17011_simDetectorConstruction::Construct()
     // 					 8);
 
     G4double distclover = CloverCryox/2./tan(22.5*deg) + CloverCryoz/2.;
-    G4RotationMatrix *rotatetempx[8];
-    G4RotationMatrix *rotatetempy[8];
-    G4RotationMatrix *rotatetempz[8];
+    G4RotationMatrix *rotatetemp_ring1[8];
+    G4RotationMatrix *rotatetemp_ring2[8];
+    G4RotationMatrix *rotatetemp_ring3[8];
     for(int ii = 0; ii < 8; ii++){
-      rotatetempx[ii] = new G4RotationMatrix();
-      rotatetempx[ii]->rotateX(45.0*deg*ii);
-      rotatetempy[ii] = new G4RotationMatrix();
-      rotatetempy[ii]->rotateY(45.0*deg*ii);
-      rotatetempz[ii] = new G4RotationMatrix();
-      rotatetempz[ii]->rotateZ(45.0*deg*ii);
+      rotatetemp_ring1[ii] = new G4RotationMatrix();
+      rotatetemp_ring1[ii]->rotateZ(45.0*deg*ii);
+      rotatetemp_ring1[ii]->rotateY(90.0*deg);
+      rotatetemp_ring1[ii]->rotateX(90.0*deg*ii);
+      rotatetemp_ring2[ii] = new G4RotationMatrix();
+      rotatetemp_ring2[ii]->rotateX(45.0*deg*ii);
+      rotatetemp_ring3[ii] = new G4RotationMatrix();
+      rotatetemp_ring3[ii]->rotateY(45.0*deg*ii);
+      rotatetemp_ring3[ii]->rotateY(90.0*deg);
+      
     }
 
     //x-y plane
     for(int ii = 0; ii < 8; ii++){
       CloverCryoPos = G4ThreeVector( distclover*cos(45.0*deg*ii), distclover*sin(45*deg*ii) , 0 );
 
-      physiCloverCryo = new G4PVPlacement(rotatetempz[ii],
+      physiCloverCryo = new G4PVPlacement(rotatetemp_ring1[ii],
 					  CloverCryoPos,
 					  logicCloverCryo,
 					  "CloverCryo",
@@ -1114,8 +1118,8 @@ G4VPhysicalVolume* e17011_simDetectorConstruction::Construct()
     int detnum = 8;
     for(int ii = 0; ii < 8; ii++){
       CloverCryoPos = G4ThreeVector( 0, distclover*sin(45*deg*ii) , distclover*cos(45.0*deg*ii) );
-      if(ii != 2|| ii != 6){
-	physiCloverCryo = new G4PVPlacement(rotatetempx[ii],
+      if(ii != 2 && ii != 6){
+	physiCloverCryo = new G4PVPlacement(rotatetemp_ring2[ii],
 					    CloverCryoPos,
 					    logicCloverCryo,
 					    "CloverCryo",
@@ -1129,8 +1133,8 @@ G4VPhysicalVolume* e17011_simDetectorConstruction::Construct()
     detnum = 14;
     for(int ii = 0; ii < 8; ii++){
       CloverCryoPos = G4ThreeVector( distclover*cos(45.0*deg*ii), 0 ,distclover*sin(45*deg*ii) );
-      if(ii != 0 || ii != 2|| ii != 4 || ii != 6){
-	physiCloverCryo = new G4PVPlacement(rotatetempy[ii],
+      if(ii != 0 && ii != 2 && ii != 4 && ii != 6){
+	physiCloverCryo = new G4PVPlacement(rotatetemp_ring3[ii],
 					    CloverCryoPos,
 					    logicCloverCryo,
 					    "CloverCryo",
