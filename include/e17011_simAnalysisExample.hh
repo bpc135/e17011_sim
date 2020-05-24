@@ -423,6 +423,8 @@ private:
   TH1D *hEnergyDepositClover_addback[18];
   TH1D *hClover_addback;
   TH1D *hClover_arrayadd;
+  TH2D *hClover_gg;
+  TH2D *hClover_gg_esum;
   TH1D *hsega_tigress;
   TH1D *hsega_tigress_s;
   TH1D *hGeDSSD;
