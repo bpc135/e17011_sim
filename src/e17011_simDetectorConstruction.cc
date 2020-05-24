@@ -75,13 +75,14 @@ e17011_simDetectorConstruction::e17011_simDetectorConstruction()
   fUseGeThickDetectorCryoEndCap= false;
 
   fUseSega = true;
-  fUseClover = false;
+  fUseClover = true;
+  fUseCloverBracket = false;
 
   //BC - use LaBr3 array
   //these should be set to true but for now I am setting them to false to do some testing
   
-  fUseLaBr3 = true;
-  fUseLaBr3Frame = true;
+  fUseLaBr3 = false;
+  fUseLaBr3Frame = false;
   
   //BC - use 3Hen
   fUse3Hen = false;
@@ -107,6 +108,9 @@ e17011_simDetectorConstruction::e17011_simDetectorConstruction()
 
   //BC - Beam Pipe
   fUsePipe = true;
+
+    //BC - Beam Pipe
+  fUsePipeFacePlate = true;
  
   //BC - PSPMT
   //return to true once testing is over
@@ -177,6 +181,7 @@ void e17011_simDetectorConstruction::DefineMaterials()
   SegaVacuumMater = materialsManager->GetMaterial("vacuum");
   CloverCrystalMater = materialsManager->GetMaterial("Ge");
   CloverCryoMater = materialsManager->GetMaterial("Al");
+  CloverBracketMater = materialsManager->GetMaterial("Al");
   VacuumMater = materialsManager->GetMaterial("vacuum");
   BCSdssdMater = materialsManager->GetMaterial("Si");
   BCSPlasticMater = materialsManager->GetMaterial("polyethylene");
@@ -831,10 +836,6 @@ G4VPhysicalVolume* e17011_simDetectorConstruction::Construct()
   G4double CloverCryoy = 101.0*mm;
   G4double CloverCryoz = CloverCrystalLength + 20.0*mm;
 
-  //test non standard dimensions
-  // CloverCryoy = 151.0*mm;
-  // CloverCryoz += 100.0*mm;
-
   solidCloverCryo = new G4Box("CloverCryo",CloverCryox/2.,CloverCryoy/2.,CloverCryoz/2.);
   logicCloverCryo = new G4LogicalVolume(solidCloverCryo,CloverCryoMater, "CloverCryo",0,0,0);
 
@@ -897,10 +898,61 @@ G4VPhysicalVolume* e17011_simDetectorConstruction::Construct()
 
   G4cout << " TIGRESS2 " << G4endl;
 
+
+
+
+  //place the vacuum into the cryostat
+  // CloverBracketPos = G4ThreeVector(0,0,0);
+  // physiCloverBracket = new G4PVPlacement(0,	 
+  // 					 CloverBracketPos,
+  // 					 logicCloverBracket,
+  // 					 "CloverBracket",
+  // 					 logicCloverBracket,
+  // 					 false,
+  // 					 0);
+
+
+
+  G4cout << " Clover Bracket set up " << G4endl;
+
+
+
+
+
+  //outer measurements of bracket: length(x,y), thickness(z)
+
+ flabr3PMToutrad = 3.175*cm;  //radius 
+
+  CloverBracketThickness = 10.0*mm;
+  CloverBracketLength = ( (2.0*flabr3PMToutrad)+(2.0*flabr3PMToutrad*sqrt(3.0)) ); //(2r + 2rsqrt(3)) is the equation for minimum length of side for a triangle with three inscribed circles of equal radii (also idk if radii is the correct word)
+
+
+  //"out" refers to outer dimensions
+  CloverBracketOutx = CloverBracketLength;
+  CloverBracketOuty = CloverBracketLength;
+  CloverBracketOutz = CloverBracketThickness;
   
+  //"in" refers to inner dimensions ; for now, use length of outer clover lengths
+  CloverBracketInx = CloverCryox; //add 10*mm or something if you want space between bracket and clover detector
+  CloverBracketIny = CloverCryoy;
+  CloverBracketInz = CloverCryoz;
+
+  fPipeOutRad = 5.715*cm;
+
+  G4double centerangle = 22.5;  
+  G4double distbracket =   (0.5*CloverBracketOutx/tan(pi*centerangle/180.0))+(CloverBracketThickness/2.0);
+  //+(flabr3PMToutrad*sqrt(2))
+  //if the clovers touch first:  fPipeOutRad + (CloverCryox/sqrt(2.0)) + (CloverCryox/2.0);
+
+  // G4double distclover = (fPipeOutRad + (CloverCryox/sqrt(2)) ) / (sin(pi/4)); //distbracket;
+  //G4double distclover = 13.208*cm +(CloverCryox/2.0); //if radial distance = 5.2 inches
+  G4double distclover =13.208*cm + (CloverCryox/2.0); // if radial distance = 5.2 inches
+ // 15.9004*cm + (CloverCryox/2.0); //if radial distance = 6.26 inches
+
+
   if(fUseClover){
 
-    //place nine clover detectors and the GeDSSD
+    //place nine clover detectors around the GeDSSD
 
     //G4RotationMatrix *rotatetemp = new G4RotationMatrix();
     //rotatetemp->rotateY(90.*deg);
@@ -997,12 +1049,7 @@ G4VPhysicalVolume* e17011_simDetectorConstruction::Construct()
 
 
     /**** cross ****/
-    G4RotationMatrix *rotateCloverx = new G4RotationMatrix();
-    rotateCloverx->rotateX(90.*deg);
-    G4RotationMatrix *rotateClovery = new G4RotationMatrix();
-    rotateClovery->rotateY(90.*deg);
-    G4RotationMatrix *rotateCloverz = new G4RotationMatrix();
-    
+
     
     // CloverCryoPos = G4ThreeVector(0,CloverCryoy/2.+ CloverCryoz/2.,CloverCryoz/2. + fGeThickDetectorCryoThickness/2. + 0.8*cm);
     // physiCloverCryo = new G4PVPlacement(rotateCloverx,
@@ -1084,98 +1131,233 @@ G4VPhysicalVolume* e17011_simDetectorConstruction::Construct()
     // 					 logicWorld,
     // 					 false,
     // 					 8);
+    // ((CloverCryox/2)+(CloverCryox/sqrt(2))+CloverCryoz/2)
 
-    G4double distclover = CloverCryox/2./tan(22.5*deg) + CloverCryoz/2.;
-    G4RotationMatrix *rotatetemp_ring1[8];
-    G4RotationMatrix *rotatetemp_ring2[8];
-    G4RotationMatrix *rotatetemp_ring3[8];
+
+
+
+  
+
+ 
+
+    //  G4double centerangle = 22.5;    //angle between cryostats/bracket & center
+    // G4double distbracket = 0.5*CloverBracketOutx/tan(pi*centerangle/180.0);
+
+
+
+    G4RotationMatrix *rotate_ring1[8]; 
+    G4RotationMatrix *rotate_ring2[8];
+    G4RotationMatrix *rotate_ring3[8];
     for(int ii = 0; ii < 8; ii++){
-      rotatetemp_ring1[ii] = new G4RotationMatrix();
-      rotatetemp_ring1[ii]->rotateZ(45.0*deg*ii);
-      rotatetemp_ring1[ii]->rotateY(90.0*deg);
-      rotatetemp_ring1[ii]->rotateX(90.0*deg*ii);
-      rotatetemp_ring2[ii] = new G4RotationMatrix();
-      rotatetemp_ring2[ii]->rotateX(45.0*deg*ii);
-      rotatetemp_ring3[ii] = new G4RotationMatrix();
-      rotatetemp_ring3[ii]->rotateY(45.0*deg*ii);
-      rotatetemp_ring3[ii]->rotateY(90.0*deg);
-      
+      rotate_ring1[ii] = new G4RotationMatrix();
+      rotate_ring1[ii]->rotateY(315.*deg*ii);
+      rotate_ring2[ii] = new G4RotationMatrix();
+      rotate_ring2[ii]->rotateX(45.*deg*ii);
+      rotate_ring3[ii] = new G4RotationMatrix();
+      rotate_ring3[ii]->rotateY(90.*deg*ii);
+      rotate_ring3[ii]->rotateX(135.*deg);
     }
 
-    //x-y plane
-    for(int ii = 0; ii < 8; ii++){
-      CloverCryoPos = G4ThreeVector( distclover*cos(45.0*deg*ii), distclover*sin(45*deg*ii) , 0 );
 
-      physiCloverCryo = new G4PVPlacement(rotatetemp_ring1[ii],
+
+    //  G4double distclover = 0.5*CloverBracketOutx/tan(pi*centerangle/180.0);
+  
+
+    for(int ii = 0; ii < 8; ii++){
+      CloverCryoPos = G4ThreeVector( distclover*sin(pi/4*ii)*cos(0), distclover*sin(pi/4*ii)*sin(0) , distclover*cos(pi/4*ii) );
+      if(ii!=0 && ii!=4){
+      physiCloverCryo = new G4PVPlacement(rotate_ring1[ii],
 					  CloverCryoPos,
 					  logicCloverCryo,
 					  "CloverCryo",
 					  logicWorld,
 					  false,
 					  ii);
-    }
-    //y-z plane
-    int detnum = 8;
-    for(int ii = 0; ii < 8; ii++){
-      CloverCryoPos = G4ThreeVector( 0, distclover*sin(45*deg*ii) , distclover*cos(45.0*deg*ii) );
-      if(ii != 2 && ii != 6){
-	physiCloverCryo = new G4PVPlacement(rotatetemp_ring2[ii],
-					    CloverCryoPos,
-					    logicCloverCryo,
-					    "CloverCryo",
-					    logicWorld,
-					    false,
-					    detnum);
-	detnum++;
       }
     }
-    //x-z plane
-    detnum = 14;
+ 
+
+
+    int count=8;
     for(int ii = 0; ii < 8; ii++){
-      CloverCryoPos = G4ThreeVector( distclover*cos(45.0*deg*ii), 0 ,distclover*sin(45*deg*ii) );
-      if(ii != 0 && ii != 2 && ii != 4 && ii != 6){
-	physiCloverCryo = new G4PVPlacement(rotatetemp_ring3[ii],
-					    CloverCryoPos,
-					    logicCloverCryo,
-					    "CloverCryo",
-					    logicWorld,
-					    false,
-					    detnum);
-	detnum++;
+      CloverCryoPos = G4ThreeVector(distclover*sin(pi/4*ii)*sin(0) , distclover*sin(pi/4*ii)*cos(0), distclover*cos(pi/4*ii) );
+      if(ii!=0 && ii!=4){
+	physiCloverCryo = new G4PVPlacement(rotate_ring2[ii],
+					  CloverCryoPos,
+					  logicCloverCryo,
+					  "CloverCryo",
+					  logicWorld,
+					  false,
+					  count);
+	count=count+1;
+
       }
     }
 
+
+    count=14;
+    for(int ii = 0; ii < 8; ii++){
+      CloverCryoPos = G4ThreeVector(distclover*cos(pi/4*ii), distclover*sin(pi/4*ii)*cos(0), distclover*sin(pi/4*ii)*sin(0));
+      if(ii!=0 && ii!=2 && ii!=4 && ii!=6){
+	physiCloverCryo = new G4PVPlacement(rotate_ring3[ii],
+					  CloverCryoPos,
+					  logicCloverCryo,
+					  "CloverCryo",
+					  logicWorld,
+					  false,
+					  count);
+	count=count+1;
+
+      }
+    }
+
+  
 
   }
+
+
+ 
+  //making frames for each clover (and making it able to be turned off/on)
+
+
+
+  G4Box *outerbracket = new G4Box("outerbracket",CloverBracketOutx/2, CloverBracketOuty/2, CloverBracketOutz/2);
+  G4Box *innerbracket = new G4Box("innerbracket", CloverBracketInx/2, CloverBracketIny/2, CloverBracketInz/2);
+
+  // use G4SubtractionSolid to subtract CloverCryostat from bracket)
+  solidCloverBracket = new G4SubtractionSolid("CloverBracket", outerbracket, innerbracket);
+
+  logicCloverBracket = new G4LogicalVolume(solidCloverBracket, CloverBracketMater, "CloverBracket", 0,0,0);
+ 
+
+  // G4double centerangle = 22.5;    //angle between cryostats/bracket & center
+  //  G4double distbracket = 0.5*CloverBracketOutx/tan(pi*centerangle/180.0);
+			
+
+  if(fUseCloverBracket){
+  
+
+
+    G4RotationMatrix *rotate_ring1[8]; 
+    G4RotationMatrix *rotate_ring2[8];
+    G4RotationMatrix *rotate_ring3[8];
+    for(int ii = 0; ii < 8; ii++){
+      rotate_ring1[ii] = new G4RotationMatrix();
+      rotate_ring1[ii]->rotateY(315.*deg*ii);
+      rotate_ring2[ii] = new G4RotationMatrix();
+      rotate_ring2[ii]->rotateX(45.*deg*ii);
+      rotate_ring3[ii] = new G4RotationMatrix();
+      rotate_ring3[ii]->rotateY(90.*deg*ii);
+      rotate_ring3[ii]->rotateX(135.*deg);
+    }
+
+
+  
+  for(int ii = 0; ii < 8; ii++){
+    CloverBracketPos = G4ThreeVector( distbracket*sin(pi/4*ii)*cos(0), distbracket*sin(pi/4*ii)*sin(0) , distbracket*cos(pi/4*ii) );
+    physiCloverBracket = new G4PVPlacement(rotate_ring1[ii],
+					  CloverBracketPos,
+					  logicCloverBracket,
+					  "CloverBracket",
+					  logicWorld,
+					  false,
+					   ii, true);
+    
+    }
+
+  int number=8;
+    for(int ii = 0; ii < 8; ii++){
+      CloverBracketPos = G4ThreeVector(distbracket*sin(pi/4*ii)*sin(0) , distbracket*sin(pi/4*ii)*cos(0), distbracket*cos(pi/4*ii) );
+      if(ii!=0 && ii!=4){
+	physiCloverBracket = new G4PVPlacement(rotate_ring2[ii],
+					  CloverBracketPos,
+					  logicCloverBracket,
+					  "CloverBracket",
+					  logicWorld,
+					  false,
+					       number, true);
+	number=number+1;
+
+      }
+    }
+
+    number=14;
+    for(int ii = 0; ii < 8; ii++){
+      CloverBracketPos = G4ThreeVector(distbracket*cos(pi/4*ii), distbracket*sin(pi/4*ii)*cos(0), distbracket*sin(pi/4*ii)*sin(0));
+      if(ii!=0 && ii!=2 && ii!=4 && ii!=6){
+	physiCloverBracket = new G4PVPlacement(rotate_ring3[ii],
+					  CloverBracketPos,
+					  logicCloverBracket,
+					  "CloverBracket",
+					  logicWorld,
+					  false,
+					  number, true);
+	number=number+1;
+
+      }
+    }
+  }
+ 
+
+			       
+ 
+
   
   //BC - create beam pipe used for LaBr3 array
   
   //Al beam pipe:  4.5 inch outer diameter (radius = 5.715 cm), 0.125 inch thickness (0.3175 cm)
 
   //fPipeOutRad = 5.715*cm;
-  fPipeOutRad = 5.7975*cm;
+
+  //fPipeOutRad = 5.7975*cm; //this is the outrad, but it is defined earlier
+  fPipeOutRad = 5.715*cm;//actual measurement
   //fPipeOutRad = 5.87375*cm;
   //fPipeOutRad = 6.0325*cm;
   //fPipeOutRad = 6.19125*cm;
   //fPipeOutRad = 6.35*cm;
-  fPipeInRad = 5.3975*cm;
-  fPipeLength = 50.8*cm;
+  //fPipeInRad = 5.3975*cm;
+  fPipeInRad = 5.55874*cm; //from drawings 0.23876cm thick
+  //fPipeLength = 50.8*cm + (40*cm);//Too long!
+  fPipeLength = 30.735*cm;// from drawings
   //fPipeLength = 39.6875*cm;
+
+  fPipeFacePlateOutRad = 5.715*cm;//should be the same as the actual pipe radius
+  fPipeFacePlateDepth = 0.025*cm;
+
+
 
   if(fUsePipe){
     //solidBCSpipe = new G4Tubs("BCSpipe",5.3975*cm,5.715*cm,50.8*cm/2.,0., twopi);
     //solidBCSpipe = new G4Tubs("BCSpipe",5.3975*cm,5.87375*cm,50.8*cm/2.,0., twopi);
     // solidBCSpipe = new G4Tubs("BCSpipe",5.3975*cm,6.0325*cm,50.8*cm/2.,0., twopi);
-    solidBCSpipe = new G4Tubs("BCSpipe",fPipeInRad,fPipeOutRad,fPipeLength/2.,0., twopi);
+    solidBCSpipe = new G4Tubs("BCSpipe",fPipeInRad,fPipeOutRad,fPipeLength/2.0,0., twopi);
     logicBCSpipe = new G4LogicalVolume(solidBCSpipe,SegaCryoMater,"BCSpipe",0,0,0); //This is Al beam pipe!
+    //fPipe_zpos = 0*cm;
+
+     solidBCSpipefaceplate = new G4Tubs("BCSpipefaceplate",fPipeFacePlateInRad,fPipeFacePlateOutRad,fPipeFacePlateDepth/2.0,0., twopi);
+  logicBCSpipefaceplate = new G4LogicalVolume(solidBCSpipefaceplate,SegaCryoMater,"BCSpipefaceplate",0,0,0); //This is Al beam pipe!
+  fPipeFacePlate_zpos = fPipe_zpos - fPipeFacePlateDepth/2.0 + fPipeLength/2.0 ;
+
+
+    
     physiBCSpipe = new G4PVPlacement(0,
-				     G4ThreeVector(0,0,0),
+				     G4ThreeVector(0,0,10.5438*cm),
 				     logicBCSpipe,
 				     "BCSpipe",
 				     logicWorld,
 				     false,
 				     0,
 				     true);
+
+    physiBCSpipefaceplate = new G4PVPlacement(0,
+				     G4ThreeVector(0,0,-fPipeFacePlate_zpos),//10.5438 + 10.5438/2 -1
+				     logicBCSpipefaceplate,
+				     "BCSpipefaceplate",
+				     logicBCSpipe,
+				     false,
+				     0,
+				     true);
+    
     
     //Stainless Steel beam pipe:  4.25 inch outer diamter, 0.065 inch thickness (0.1651 cm)
     /*solidBCSpipe = new G4Tubs("BCSpipe",5.2324*cm,5.3975*cm,50.8*cm/2.,0., twopi);
@@ -1246,7 +1428,7 @@ G4VPhysicalVolume* e17011_simDetectorConstruction::Construct()
         0);
   
   
-  if(fUseLaBr3){
+  /*  if(fUseLaBr3){
   
     G4cout << " LaBr3 array " << G4endl;
     
@@ -1375,7 +1557,7 @@ G4VPhysicalVolume* e17011_simDetectorConstruction::Construct()
           true);  //last true for collision detection (check if volumes touch)
     }
   
-  }  //end LaBr3 array
+   }  //end LaBr3 array */
   
   
   //BC - create LaBr3 frame
@@ -1401,6 +1583,646 @@ G4VPhysicalVolume* e17011_simDetectorConstruction::Construct()
 					true);
   
   } //end labr3 frame
+  
+
+  //LaBr3Rhombi set up begins here
+    // if(fUseClover){
+    // G4cout << " LaBr3 array " << G4endl;
+  if(fUseLaBr3){
+    G4cout << " LaBr3 array " << G4endl;
+
+    G4double TriangleLength = CloverBracketLength; //triangle side length
+    G4double labr3coverdiagonal = sqrt( pow(flabr3AlCoverlength, 2.0) + pow((flabr3AlCoveroutrad*2.0), 2.0));
+
+    G4double alpha = atan( (flabr3AlCoverlength/2.0)/flabr3AlCoveroutrad);
+    G4double beta = (pi/2.0)-(pi/4.0)- alpha;
+
+    G4double ypos_2_aftershrinking = (CloverCryox/2) + (labr3coverdiagonal/2.0)*cos(beta); //ypos after shrinking
+     G4double ypos_2_original = (CloverBracketLength/2.0)+(TriangleLength/((2.0*sqrt(2))+(2.0*sqrt(6))) );
+     G4double changeiny = ypos_2_original - ypos_2_aftershrinking; // changeiny is uniform across all detectors. Just subtract changeiny from original ypos_# for each of the three positions
+ 
+
+
+
+
+
+	
+
+
+    for(G4int n=0; n < 8; n++){
+
+      // G4double ypos_2_original = (CloverBracketLength/2.0)+(TriangleLength/((2.0*sqrt(2))+(2.0*sqrt(6))) );
+	// G4double ypos_2 = ypos_2_original - changeiny;
+      G4double ypos_2 = (CloverBracketLength/2.0)+(TriangleLength/((2.0*sqrt(2))+(2.0*sqrt(6))) );
+
+
+      // G4double zpos_2 = (CloverBracketLength/2.0) + ( ((flabr3PMToutrad*sqrt(3))/sqrt(2)) - (flabr3PMToutrad/2.0) ) - (changeiny/sqrt(2));
+      G4double zpos_2 = (CloverBracketLength/2.0) + ( ( (sqrt(3)/sqrt(2)) - (1/2.0) )*(TriangleLength/(2.0+2*sqrt(3))) );
+//(CloverBracketLength/2.0)+(2*flabr3PMToutrad/sqrt(6));
+//(CloverBracketLength/2.0)+ (flabr3PMToutrad*(2+sqrt(3)-sqrt(2))/2); 
+//((CloverBracketLength/2.0)+(TriangleLength/(2.0+2.0*sqrt(3))));
+
+
+//     G4double xpos_2 = (CloverBracketLength/2.0)+ (flabr3PMToutrad* ( (2*sqrt(2))+ (sqrt(6)) - 1.0 ) /2.0) - (changeiny/sqrt(2)); 
+     G4double xpos_2 = (CloverBracketLength/2.0) + ( ( ( (2*sqrt(2))+ (sqrt(6)) - 1.0 ) /2.0)*(TriangleLength/(2.0+2*sqrt(3))) ) ; 
+// changeiny/sqrt(2) because that distance that's being subtracted is divided between x and z axis; 
+//(CloverBracketLength/2.0)+( ((2*flabr3PMToutrad/sqrt(3))+2*flabr3PMToutrad)/sqrt(2) ); //didn't work
+//(CloverBracketLength/2.0)+(TriangleLength* (2+sqrt(3)+sqrt(2))/(4*(1+sqrt(3)))); //didn't work
+//(flabr3PMToutrad*(2+sqrt(3)+sqrt(2))/2); //((CloverBracketLength/2.0)+(TriangleLength/2)); //didn't work
+
+
+
+ // G4RotationMatrix *rotatelabr3 = new G4RotationMatrix();
+ // rotatelabr3->rotateY(atan(xpos_2/zpos_2)*(-1));
+ // rotatelabr3->rotateX(atan(ypos_2/xpos_2));
+
+      // G4double xpos_2 = ((CloverBracketLength/2.0)+(TriangleLength/2));
+      // G4double zpos_2 = ((CloverBracketLength/2.0)+(TriangleLength/(2.0+2.0*sqrt(3))));
+      // G4double ypos_2 = (CloverBracketLength/2.0)+(TriangleLength/((2.0*sqrt(2))+(2.0*sqrt(6))));
+
+        G4double fLaBr3xpos_2 = xpos_2;
+	G4double fLaBr3zpos_2 = zpos_2;
+	G4double fLaBr3ypos_2 = ypos_2;
+	
+
+
+	// 		G4double fLaBr3zpos_2[8];
+	// if (int n=2 && 3 && 6 && 7){
+        // G4double zpos_2 = ((CloverBracketLength/2.0)+(TriangleLength/(2.0+2.0*sqrt(3))));
+
+
+	// G4RotationMatrix*rotatelabr3 = new G4RotationMatrix();
+	// // rotatelabr3->rotateY(atan((xpos_2*pow(-1,n>>2))/(zpos_2*pow(-1,n)))*-1+pi);
+	// // rotatelabr3->rotateX(atan(ypos_2/ (sqrt( pow(xpos_2, 2.0) + pow(zpos_2, 2.0))) ) *(-1)); // incorrect, figure out what n>>ii causes in terms of xpos, zpos, etc.
+	//   rotatelabr3->rotateY(315*deg);
+	//   rotatelabr3->rotateX(225*deg); 
+
+	  G4RotationMatrix*rotatelabr3_p2[8];
+	  for (int n = 0; n < 8; n++){
+	    if (n==0){
+	    rotatelabr3_p2[n] = new G4RotationMatrix();
+	    rotatelabr3_p2[n]->rotateY(atan((xpos_2*pow(-1,n>>0))/(zpos_2*pow(-1,n>>1)))*(-1)+pi);
+	    rotatelabr3_p2[n]->rotateX(atan( (ypos_2*pow(-1,n>>2)) / (sqrt( pow(xpos_2, 2.0) + pow(zpos_2, 2.0))) ) *(-1));
+	    }else if (n==1){
+	    rotatelabr3_p2[n] = new G4RotationMatrix();
+	    rotatelabr3_p2[n]->rotateY(atan((xpos_2*pow(-1,n>>0))/(zpos_2*pow(-1,n>>1)))*(-1)+pi);
+	    rotatelabr3_p2[n]->rotateX(atan( (ypos_2*pow(-1,n>>2)) / (sqrt( pow(xpos_2, 2.0) + pow(zpos_2, 2.0))) ) *(-1));
+	    }else if (n==4){
+	    rotatelabr3_p2[n] = new G4RotationMatrix();
+	    rotatelabr3_p2[n]->rotateY(atan((xpos_2*pow(-1,n>>0))/(zpos_2*pow(-1,n>>1)))*(-1)+pi);
+	    rotatelabr3_p2[n]->rotateX(atan( (ypos_2*pow(-1,n>>2)) / (sqrt( pow(xpos_2, 2.0) + pow(zpos_2, 2.0))) ) *(-1));
+	    }else if (n==5){
+	    rotatelabr3_p2[n] = new G4RotationMatrix();
+	    rotatelabr3_p2[n]->rotateY(atan((xpos_2*pow(-1,n>>0))/(zpos_2*pow(-1,n>>1)))*(-1)+pi);
+	    rotatelabr3_p2[n]->rotateX(atan( (ypos_2*pow(-1,n>>2)) / (sqrt( pow(xpos_2, 2.0) + pow(zpos_2, 2.0))) ) *(-1));
+	    }else{
+	    rotatelabr3_p2[n] = new G4RotationMatrix();
+	    rotatelabr3_p2[n]->rotateY(atan((xpos_2*pow(-1,n>>0))/(zpos_2*pow(-1,n>>1)))*(-1));
+	    rotatelabr3_p2[n]->rotateX(atan( (ypos_2*pow(-1,n>>2)) / (sqrt( pow(xpos_2, 2.0) + pow(zpos_2, 2.0))) ) *(-1));
+	    }}
+
+//2,3,6,and 7 add pi
+
+       physiLaBr3AlCover = new G4PVPlacement(rotatelabr3_p2[n],
+					     G4ThreeVector( xpos_2*pow(-1,n>>0), ypos_2*pow(-1,n>>2), zpos_2*pow(-1,n>>1) ),
+      					    logicLaBr3AlCover,
+      					    "LaBr3AlCover",
+      					    logicWorld,
+      					    false,
+      					    n,
+					    true);
+    }
+
+       /*
+	if(n==0){
+	  G4RotationMatrix *rotatelabr3 = new G4RotationMatrix();
+	  // rotatelabr3->rotateY(atan(xpos_2/zpos_2)*(-1)+pi);
+	  // rotatelabr3->rotateX(atan(ypos_2/ (sqrt( pow(xpos_2, 2.0) + pow(zpos_2, 2.0))) ) *(-1));
+	  rotatelabr3->rotateY(315*deg);
+	  rotatelabr3->rotateX(225*deg); 
+
+        physiLaBr3AlCover = new G4PVPlacement(rotatelabr3,
+					      G4ThreeVector( fLaBr3xpos_2, fLaBr3ypos_2, fLaBr3zpos_2 ),
+ 					     logicLaBr3AlCover,
+ 					     "LaBr3AlCover",
+ 					     logicWorld,
+ 					     false,
+ 					     n,
+ 					     true);
+	} 
+	if(n==1){
+	  G4RotationMatrix *rotatelabr3 = new G4RotationMatrix();
+	  // rotatelabr3->rotateY((atan(xpos_2/zpos_2))+pi+pi);
+	  // rotatelabr3->rotateX(atan(ypos_2/(sqrt( pow(xpos_2, 2.0) + pow(zpos_2, 2.0))) ) *(-1));
+	  rotatelabr3->rotateY(45*deg);
+	  rotatelabr3->rotateX(315*deg);
+
+	physiLaBr3AlCover = new G4PVPlacement(rotatelabr3,
+					      G4ThreeVector( fLaBr3xpos_2, fLaBr3ypos_2, (fLaBr3zpos_2*(-1)) ),
+ 					     logicLaBr3AlCover,
+ 					     "LaBr3AlCover",
+ 					     logicWorld,
+ 					     false,
+ 					     n,
+					      true); 
+					     } 
+	if(n==2){
+	  G4RotationMatrix *rotatelabr3 = new G4RotationMatrix();
+	  // rotatelabr3->rotateY(atan(xpos_2/zpos_2)*(-1)+pi);
+	  // rotatelabr3->rotateX(atan(ypos_2/ (sqrt( pow(xpos_2, 2.0) + pow(zpos_2, 2.0))) ));
+	  rotatelabr3->rotateY(135*deg);
+	  rotatelabr3->rotateX(45*deg);
+
+        physiLaBr3AlCover = new G4PVPlacement(rotatelabr3,
+					      G4ThreeVector( fLaBr3xpos_2, (fLaBr3ypos_2*(-1)), fLaBr3zpos_2 ),
+ 					     logicLaBr3AlCover,
+ 					     "LaBr3AlCover",
+ 					     logicWorld,
+ 					     false,
+ 					     n,
+ 					     true);
+	} 
+	if(n==3){
+	  G4RotationMatrix *rotatelabr3 = new G4RotationMatrix();
+	  // rotatelabr3->rotateY((atan(xpos_2/zpos_2))+pi+pi);
+	  // rotatelabr3->rotateX((atan(ypos_2/(sqrt( pow(xpos_2, 2.0) + pow(zpos_2, 2.0))) )) );
+	  rotatelabr3->rotateY(45*deg);
+	  rotatelabr3->rotateX(45*deg);
+
+        physiLaBr3AlCover = new G4PVPlacement(rotatelabr3,
+					      G4ThreeVector( fLaBr3xpos_2, (fLaBr3ypos_2*(-1)), (fLaBr3zpos_2*(-1)) ),
+ 					     logicLaBr3AlCover,
+ 					     "LaBr3AlCover",
+ 					     logicWorld,
+ 					     false,
+ 					     n,
+ 					     true);
+					     }
+	if(n==4){
+	  G4RotationMatrix *rotatelabr3 = new G4RotationMatrix();
+	  // rotatelabr3->rotateY((atan(xpos_2/zpos_2))+pi);
+	  // rotatelabr3->rotateX(atan(ypos_2/(sqrt( pow(xpos_2, 2.0) + pow(zpos_2, 2.0))) ) *(-1) );
+	  rotatelabr3->rotateY(225*deg);
+	  rotatelabr3->rotateX(315*deg);
+
+        physiLaBr3AlCover = new G4PVPlacement(rotatelabr3,
+					      G4ThreeVector( (fLaBr3xpos_2*(-1)), fLaBr3ypos_2, fLaBr3zpos_2 ),
+ 					     logicLaBr3AlCover,
+ 					     "LaBr3AlCover",
+ 					     logicWorld,
+ 					     false,
+ 					     n,
+ 					     true);
+	}
+	if(n==5){
+	  G4RotationMatrix *rotatelabr3 = new G4RotationMatrix();
+	  // rotatelabr3->rotateY((atan(xpos_2/zpos_2)*(-1))-pi+pi);
+	  // rotatelabr3->rotateX(atan(ypos_2/(sqrt( pow(xpos_2, 2.0) + pow(zpos_2, 2.0))) ) *(-1) );
+	  rotatelabr3->rotateY(315*deg);
+	  rotatelabr3->rotateX(315*deg);
+
+        physiLaBr3AlCover = new G4PVPlacement(rotatelabr3,
+					      G4ThreeVector( (fLaBr3xpos_2*(-1)), fLaBr3ypos_2, (fLaBr3zpos_2*(-1)) ),
+ 					     logicLaBr3AlCover,
+ 					     "LaBr3AlCover",
+ 					     logicWorld,
+ 					     false,
+ 					     n,
+ 					     true);
+	}
+	if(n==6){
+	  G4RotationMatrix *rotatelabr3 = new G4RotationMatrix();
+	  // rotatelabr3->rotateY((atan(xpos_2/zpos_2))+pi);
+	  // rotatelabr3->rotateX((atan(ypos_2/(sqrt( pow(xpos_2, 2.0) + pow(zpos_2, 2.0))) )) );
+	  rotatelabr3->rotateY(225*deg);
+	  rotatelabr3->rotateX(45*deg);
+
+        physiLaBr3AlCover = new G4PVPlacement(rotatelabr3,
+					      G4ThreeVector( (fLaBr3xpos_2*(-1)), (fLaBr3ypos_2*(-1)), fLaBr3zpos_2 ),
+ 					     logicLaBr3AlCover,
+ 					     "LaBr3AlCover",
+ 					     logicWorld,
+ 					     false,
+ 					     n,
+ 					     true);
+					     } 
+	if(n==7){
+	  G4RotationMatrix *rotatelabr3 = new G4RotationMatrix();
+	  // rotatelabr3->rotateY((atan(xpos_2/zpos_2)*(-1))-pi+pi);
+	  // rotatelabr3->rotateX((atan(ypos_2/(sqrt( pow(xpos_2, 2.0) + pow(zpos_2, 2.0))) )) );
+	  rotatelabr3->rotateY(315*deg);
+	  rotatelabr3->rotateX(45*deg);
+
+
+        physiLaBr3AlCover = new G4PVPlacement(rotatelabr3,
+					      G4ThreeVector( (fLaBr3xpos_2*(-1)), (fLaBr3ypos_2*(-1)), (fLaBr3zpos_2*(-1)) ),
+ 					     logicLaBr3AlCover,
+ 					     "LaBr3AlCover",
+ 					     logicWorld,
+ 					     false,
+ 					     n,
+ 					     true);
+	}
+	  
+					      
+	}*/
+
+
+
+        for(G4int n=8; n < 16; n++){
+
+
+    // G4double ypos_3_original = (CloverBracketLength/2.0)+(TriangleLength/((2.0*sqrt(2))+(2.0*sqrt(6))));
+    // G4double ypos_3 = ypos_3_original - changeiny;
+	  G4double ypos_3 = (CloverBracketLength/2.0)+(TriangleLength/((2.0*sqrt(2))+(2.0*sqrt(6))));
+
+
+    //    G4double xpos_3 = (CloverBracketLength/2.0) + ( ((flabr3PMToutrad*sqrt(3))/sqrt(2)) - (flabr3PMToutrad/2.0) ) - (changeiny/sqrt(2));
+    G4double xpos_3 = (CloverBracketLength/2.0) + ( ( (sqrt(3)/sqrt(2)) - (1/2.0) )*(TriangleLength/(2.0+2*sqrt(3))) );
+//(CloverBracketLength/2.0)+(2*flabr3PMToutrad/sqrt(6)); 
+//((CloverBracketLength/2.0)+(flabr3PMToutrad*(2+sqrt(3)-sqrt(2))/2));
+//((CloverBracketLength/2.0)+(TriangleLength/(2.0+2.0*sqrt(3))));
+
+
+//	  G4double zpos_3 = (CloverBracketLength/2.0)+ (flabr3PMToutrad* ( (2*sqrt(2))+ (sqrt(6)) - 1.0 ) /2.0) - (changeiny/sqrt(2)); 
+     G4double zpos_3 = (CloverBracketLength/2.0) + ( ( ( (2*sqrt(2))+ (sqrt(6)) - 1.0 ) /2.0)*(TriangleLength/(2.0+2*sqrt(3))) ) ; 
+//(CloverBracketLength/2.0)+( ((2*flabr3PMToutrad/sqrt(3))+2*flabr3PMToutrad)/sqrt(2) ); 
+//(CloverBracketLength/2.0)+(flabr3PMToutrad*(2+sqrt(3)+sqrt(2))/2);
+//((CloverBracketLength/2.0)+(TriangleLength/2));
+
+
+
+        G4double fLaBr3xpos_3 = xpos_3;
+	G4double fLaBr3zpos_3 = zpos_3;
+	G4double fLaBr3ypos_3 = ypos_3;
+
+
+	// if(n==8){
+	//   G4RotationMatrix *rotatelabr3 = new G4RotationMatrix();
+	//   // rotatelabr3->rotateY(atan(xpos_3/zpos_3)*(-1)+pi);
+	//   // rotatelabr3->rotateX(atan(ypos_3/ (sqrt( pow(xpos_3, 2.0) + pow(zpos_3, 2.0))) ) *(-1) );
+	//   rotatelabr3->rotateY(315*deg);
+	//   rotatelabr3->rotateX(225*deg);
+
+        // physiLaBr3AlCover = new G4PVPlacement(rotatelabr3,
+	// 				      G4ThreeVector( fLaBr3xpos_3, fLaBr3ypos_3, fLaBr3zpos_3 ),
+ 	// 				     logicLaBr3AlCover,
+ 	// 				     "LaBr3AlCover",
+ 	// 				     logicWorld,
+ 	// 				     false,
+ 	// 				     n,
+ 	// 				     true);
+	// } 
+	// if(n==9){
+	//   G4RotationMatrix *rotatelabr3 = new G4RotationMatrix();
+	//   // rotatelabr3->rotateY((atan(xpos_3/zpos_3))+pi+pi);
+	//   // rotatelabr3->rotateX(atan(ypos_3/ (sqrt( pow(xpos_3, 2.0) + pow(zpos_3, 2.0))) ) *(-1) );
+	//   rotatelabr3->rotateY(45*deg);
+	//   rotatelabr3->rotateX(315*deg);
+
+	// physiLaBr3AlCover = new G4PVPlacement(rotatelabr3,
+	// 				      G4ThreeVector( fLaBr3xpos_3, fLaBr3ypos_3, (fLaBr3zpos_3*(-1)) ),
+ 	// 				     logicLaBr3AlCover,
+ 	// 				     "LaBr3AlCover",
+ 	// 				     logicWorld,
+ 	// 				     false,
+ 	// 				     n,
+	// 				      true); 
+	// 				     } 
+	// if(n==10){
+	//   G4RotationMatrix *rotatelabr3 = new G4RotationMatrix();
+	//   // rotatelabr3->rotateY(atan(xpos_3/zpos_3)*(-1)+pi);
+	//   // rotatelabr3->rotateX(atan(ypos_3/ (sqrt( pow(xpos_3, 2.0) + pow(zpos_3, 2.0))) ) );
+	//   rotatelabr3->rotateY(135*deg);
+	//   rotatelabr3->rotateX(45*deg);
+
+        // physiLaBr3AlCover = new G4PVPlacement(rotatelabr3,
+	// 				      G4ThreeVector( fLaBr3xpos_3, (fLaBr3ypos_3*(-1)), fLaBr3zpos_3 ),
+ 	// 				     logicLaBr3AlCover,
+ 	// 				     "LaBr3AlCover",
+ 	// 				     logicWorld,
+ 	// 				     false,
+ 	// 				     n,
+ 	// 				     true);
+	// } 
+	// if(n==11){
+	//   G4RotationMatrix *rotatelabr3 = new G4RotationMatrix();
+	//   // rotatelabr3->rotateY((atan(xpos_3/zpos_3))+pi+pi);
+	//   // rotatelabr3->rotateX((atan(ypos_3/ (sqrt( pow(xpos_3, 2.0) + pow(zpos_3, 2.0))) )) );
+	//   rotatelabr3->rotateY(45*deg);
+	//   rotatelabr3->rotateX(45*deg);
+
+        // physiLaBr3AlCover = new G4PVPlacement(rotatelabr3,
+	// 				      G4ThreeVector( fLaBr3xpos_3, (fLaBr3ypos_3*(-1)), (fLaBr3zpos_3*(-1)) ),
+ 	// 				     logicLaBr3AlCover,
+ 	// 				     "LaBr3AlCover",
+ 	// 				     logicWorld,
+ 	// 				     false,
+ 	// 				     n,
+ 	// 				     true);
+	// 				     }
+	// if(n==12){
+	//   G4RotationMatrix *rotatelabr3 = new G4RotationMatrix();
+	//   // rotatelabr3->rotateY((atan(xpos_3/zpos_3))+pi);
+	//   // rotatelabr3->rotateX(atan(ypos_3/ (sqrt( pow(xpos_3, 2.0) + pow(zpos_3, 2.0))) ) *(-1) );
+	//   rotatelabr3->rotateY(225*deg);
+	//   rotatelabr3->rotateX(315*deg);
+
+        // physiLaBr3AlCover = new G4PVPlacement(rotatelabr3,
+	// 				      G4ThreeVector( (fLaBr3xpos_3*(-1)), fLaBr3ypos_3, fLaBr3zpos_3 ),
+ 	// 				     logicLaBr3AlCover,
+ 	// 				     "LaBr3AlCover",
+ 	// 				     logicWorld,
+ 	// 				     false,
+ 	// 				     n,
+ 	// 				     true);
+	// }
+	// if(n==13){
+	//   G4RotationMatrix *rotatelabr3 = new G4RotationMatrix();
+	//   // rotatelabr3->rotateY((atan(xpos_3/zpos_3)*(-1))-pi+pi);
+	//   // rotatelabr3->rotateX(atan(ypos_3/ (sqrt( pow(xpos_3, 2.0) + pow(zpos_3, 2.0))) ) *(-1) );
+	//   rotatelabr3->rotateY(315*deg);
+	//   rotatelabr3->rotateX(315*deg);
+
+        // physiLaBr3AlCover = new G4PVPlacement(rotatelabr3,
+	// 				      G4ThreeVector( (fLaBr3xpos_3*(-1)), fLaBr3ypos_3, (fLaBr3zpos_3*(-1)) ),
+ 	// 				     logicLaBr3AlCover,
+ 	// 				     "LaBr3AlCover",
+ 	// 				     logicWorld,
+ 	// 				     false,
+ 	// 				     n,
+ 	// 				     true);
+	// }
+	// if(n==14){
+	//   G4RotationMatrix *rotatelabr3 = new G4RotationMatrix();
+	//   // rotatelabr3->rotateY((atan(xpos_3/zpos_3))+pi);
+	//   // rotatelabr3->rotateX((atan(ypos_3/ (sqrt( pow(xpos_3, 2.0) + pow(zpos_3, 2.0))) )) );
+	//   rotatelabr3->rotateY(225*deg);
+	//   rotatelabr3->rotateX(45*deg);
+
+        // physiLaBr3AlCover = new G4PVPlacement(rotatelabr3,
+	// 				      G4ThreeVector( (fLaBr3xpos_3*(-1)), (fLaBr3ypos_3*(-1)), fLaBr3zpos_3 ),
+ 	// 				     logicLaBr3AlCover,
+ 	// 				     "LaBr3AlCover",
+ 	// 				     logicWorld,
+ 	// 				     false,
+ 	// 				     n,
+ 	// 				     true);
+	// 				     } 
+	// if(n==15){
+	//   G4RotationMatrix *rotatelabr3 = new G4RotationMatrix();
+	//   // rotatelabr3->rotateY((atan(xpos_3/zpos_3)*(-1))-pi+pi);
+	//   // rotatelabr3->rotateX((atan(ypos_3/ (sqrt( pow(xpos_3, 2.0) + pow(zpos_3, 2.0))) )) );
+	//   rotatelabr3->rotateY(315*deg);
+	//   rotatelabr3->rotateX(45*deg);
+
+
+        // physiLaBr3AlCover = new G4PVPlacement(rotatelabr3,
+	// 				      G4ThreeVector( (fLaBr3xpos_3*(-1)), (fLaBr3ypos_3*(-1)), (fLaBr3zpos_3*(-1)) ),
+ 	// 				     logicLaBr3AlCover,
+ 	// 				     "LaBr3AlCover",
+ 	// 				     logicWorld,
+ 	// 				     false,
+ 	// 				     n,
+ 	// 				     true);
+	// 				     }
+
+	  G4RotationMatrix*rotatelabr3_p3[16];
+	  for (int n = 8; n < 16; n++){
+	    if (n==8){
+	    rotatelabr3_p3[n] = new G4RotationMatrix();
+	    rotatelabr3_p3[n]->rotateY(atan((xpos_3*pow(-1,n>>0))/(zpos_3*pow(-1,n>>1)))*(-1)+pi);
+	    rotatelabr3_p3[n]->rotateX(atan( (ypos_3*pow(-1,n>>2)) / (sqrt( pow(xpos_3, 2.0) + pow(zpos_3, 2.0))) ) *(-1));
+	    }else if (n==9){
+	    rotatelabr3_p3[n] = new G4RotationMatrix();
+	    rotatelabr3_p3[n]->rotateY(atan((xpos_3*pow(-1,n>>0))/(zpos_3*pow(-1,n>>1)))*(-1)+pi);
+	    rotatelabr3_p3[n]->rotateX(atan( (ypos_3*pow(-1,n>>2)) / (sqrt( pow(xpos_3, 2.0) + pow(zpos_3, 2.0))) ) *(-1));
+	    }else if (n==12){
+	    rotatelabr3_p3[n] = new G4RotationMatrix();
+	    rotatelabr3_p3[n]->rotateY(atan((xpos_3*pow(-1,n>>0))/(zpos_3*pow(-1,n>>1)))*(-1)+pi);
+	    rotatelabr3_p3[n]->rotateX(atan( (ypos_3*pow(-1,n>>2)) / (sqrt( pow(xpos_3, 2.0) + pow(zpos_3, 2.0))) ) *(-1));
+	    }else if (n==13){
+	    rotatelabr3_p3[n] = new G4RotationMatrix();
+	    rotatelabr3_p3[n]->rotateY(atan((xpos_3*pow(-1,n>>0))/(zpos_3*pow(-1,n>>1)))*(-1)+pi);
+	    rotatelabr3_p3[n]->rotateX(atan( (ypos_3*pow(-1,n>>2)) / (sqrt( pow(xpos_3, 2.0) + pow(zpos_3, 2.0))) ) *(-1));
+	    }else{
+	    rotatelabr3_p3[n] = new G4RotationMatrix();
+	    rotatelabr3_p3[n]->rotateY(atan((xpos_3*pow(-1,n>>0))/(zpos_3*pow(-1,n>>1)))*(-1));
+	    rotatelabr3_p3[n]->rotateX(atan( (ypos_3*pow(-1,n>>2)) / (sqrt( pow(xpos_3, 2.0) + pow(zpos_3, 2.0))) ) *(-1));
+	    }}
+
+
+       physiLaBr3AlCover = new G4PVPlacement(rotatelabr3_p3[n],
+					     G4ThreeVector( xpos_3*pow(-1,n>>0), ypos_3*pow(-1,n>>2), zpos_3*pow(-1,n>>1) ),
+      					    logicLaBr3AlCover,
+      					    "LaBr3AlCover",
+      					    logicWorld,
+      					    false,
+      					    n,
+					    true);
+
+	}
+
+
+
+       	for(G4int n=16; n < 24; n++){
+	  //pos_1 because top of triangle
+
+
+//     G4double ypos_1_original = (CloverBracketLength/2.0)+ (flabr3PMToutrad*(1+sqrt(3))/sqrt(2)) ; 
+// //(TriangleLength/(2.0*sqrt(2.0)));
+// //(CloverBracketLength/2.0)+((TriangleLength*sqrt(6))/(2.0+(2.0*sqrt(3))));
+//     G4double ypos_1 = ypos_1_original - changeiny;
+	  G4double ypos_1 = (CloverBracketLength/2.0) + ( (1.0 + sqrt(3))/sqrt(2))*(TriangleLength/(2.0+2*sqrt(3)))  ;
+
+
+    //	  G4double xpos_1 = (CloverBracketLength/2.0) + ( (flabr3PMToutrad*( (sqrt(6)) + (sqrt(2)) - (sqrt(3)) - 1)/2.0)  ) - (changeiny/sqrt(2));
+	G4double xpos_1 = (CloverBracketLength/2.0) + ( ( ( (sqrt(6)) + (sqrt(2)) - (sqrt(3)) - 1)/2.0)*(TriangleLength/(2.0+2*sqrt(3))) ) ;
+//(CloverBracketLength/2.0)+(flabr3PMToutrad/sqrt(2)); 
+//(CloverBracketLength/2.0)+(2*flabr3PMToutrad/sqrt(6));
+//((CloverBracketLength/2.0)+(TriangleLength/(2.0+(2.0*sqrt(3)))));
+
+
+//	  G4double zpos_1 = (CloverBracketLength/2.0) + ( (flabr3PMToutrad*( (sqrt(6)) + (sqrt(2)) - (sqrt(3)) - 1)/2.0)  ) - (changeiny/sqrt(2));
+	  G4double zpos_1 = (CloverBracketLength/2.0) + ( ( ( (sqrt(6)) + (sqrt(2)) - (sqrt(3)) - 1)/2.0)*(TriangleLength/(2.0+2*sqrt(3))) ) ;
+//(CloverBracketLength/2.0)+(flabr3PMToutrad/sqrt(2)); 
+//(CloverBracketLength/2.0)+((2*flabr3PMToutrad)/sqrt(6)); 
+//((CloverBracketLength/2.0)+(TriangleLength/(2.0+(2.0*sqrt(3)))));
+
+
+
+        G4double fLaBr3xpos_1 = xpos_1;
+	G4double fLaBr3zpos_1 = zpos_1;
+	G4double fLaBr3ypos_1 = ypos_1;
+
+
+	// if(n==16){
+	//   G4RotationMatrix *rotatelabr3 = new G4RotationMatrix();
+	//   // rotatelabr3->rotateY(atan(xpos_1/zpos_1)*(-1)+pi);
+	//   // rotatelabr3->rotateX(atan(ypos_1/(xpos_1*sqrt(2))) *(-1) ); // change all X rotations
+	//   rotatelabr3->rotateY(315*deg);
+	//   rotatelabr3->rotateX(225*deg);
+
+        // physiLaBr3AlCover = new G4PVPlacement(rotatelabr3,
+	// 				      G4ThreeVector( fLaBr3xpos_1, fLaBr3ypos_1, fLaBr3zpos_1 ),
+ 	// 				     logicLaBr3AlCover,
+ 	// 				     "LaBr3AlCover",
+ 	// 				     logicWorld,
+ 	// 				     false,
+ 	// 				     n,
+ 	// 				     true);
+	// } 
+	// if(n==17){
+	//   G4RotationMatrix *rotatelabr3 = new G4RotationMatrix();
+	//   // rotatelabr3->rotateY((atan(xpos_1/zpos_1))+pi+pi);
+	//   // rotatelabr3->rotateX(atan(ypos_1/(zpos_1*sqrt(2))) *(-1) );
+	//   rotatelabr3->rotateY(45*deg);
+	//   rotatelabr3->rotateX(315*deg);
+
+	// physiLaBr3AlCover = new G4PVPlacement(rotatelabr3,
+	// 				      G4ThreeVector( fLaBr3xpos_1, fLaBr3ypos_1, (fLaBr3zpos_1*(-1)) ),
+ 	// 				     logicLaBr3AlCover,
+ 	// 				     "LaBr3AlCover",
+ 	// 				     logicWorld,
+ 	// 				     false,
+ 	// 				     n,
+	// 				      true); 
+	// 				     } 
+	// if(n==18){
+	//   G4RotationMatrix *rotatelabr3 = new G4RotationMatrix();
+	//   // rotatelabr3->rotateY(atan(xpos_1/zpos_1)*(-1)+pi);
+	//   // rotatelabr3->rotateX(atan(ypos_1/(zpos_1*sqrt(2))) );
+	//   rotatelabr3->rotateY(135*deg);
+	//   rotatelabr3->rotateX(45*deg);
+
+        // physiLaBr3AlCover = new G4PVPlacement(rotatelabr3,
+	// 				      G4ThreeVector( fLaBr3xpos_1, (fLaBr3ypos_1*(-1)), fLaBr3zpos_1 ),
+ 	// 				     logicLaBr3AlCover,
+ 	// 				     "LaBr3AlCover",
+ 	// 				     logicWorld,
+ 	// 				     false,
+ 	// 				     n,
+ 	// 				     true);
+	// } 
+	// if(n==19){
+	//   G4RotationMatrix *rotatelabr3 = new G4RotationMatrix();
+	//   // rotatelabr3->rotateY((atan(xpos_1/zpos_1))+pi+pi);
+	//   // rotatelabr3->rotateX((atan(ypos_1/(zpos_1*sqrt(2)))) );
+	//   rotatelabr3->rotateY(45*deg);
+	//   rotatelabr3->rotateX(45*deg);
+
+        // physiLaBr3AlCover = new G4PVPlacement(rotatelabr3,
+	// 				      G4ThreeVector( fLaBr3xpos_1, (fLaBr3ypos_1*(-1)), (fLaBr3zpos_1*(-1)) ),
+ 	// 				     logicLaBr3AlCover,
+ 	// 				     "LaBr3AlCover",
+ 	// 				     logicWorld,
+ 	// 				     false,
+ 	// 				     n,
+ 	// 				     true);
+	// 				     }
+	// if(n==20){
+	//   G4RotationMatrix *rotatelabr3 = new G4RotationMatrix();
+	//   // rotatelabr3->rotateY((atan(xpos_1/zpos_1))+pi);
+	//   // rotatelabr3->rotateX(atan(ypos_1/(zpos_1*sqrt(2))) *(-1) );
+	//   rotatelabr3->rotateY(225*deg);
+	//   rotatelabr3->rotateX(315*deg);
+
+        // physiLaBr3AlCover = new G4PVPlacement(rotatelabr3,
+	// 				      G4ThreeVector( (fLaBr3xpos_1*(-1)), fLaBr3ypos_1, fLaBr3zpos_1 ),
+ 	// 				     logicLaBr3AlCover,
+ 	// 				     "LaBr3AlCover",
+ 	// 				     logicWorld,
+ 	// 				     false,
+ 	// 				     n,
+ 	// 				     true);
+	// }
+	// if(n==21){
+	//   G4RotationMatrix *rotatelabr3 = new G4RotationMatrix();
+	//   // rotatelabr3->rotateY((atan(xpos_1/zpos_1)*(-1))-pi+pi);
+	//   // rotatelabr3->rotateX(atan(ypos_1/(zpos_1*sqrt(2))) *(-1) );
+	//   rotatelabr3->rotateY(315*deg);
+	//   rotatelabr3->rotateX(315*deg);
+
+        // physiLaBr3AlCover = new G4PVPlacement(rotatelabr3,
+	// 				      G4ThreeVector( (fLaBr3xpos_1*(-1)), fLaBr3ypos_1, (fLaBr3zpos_1*(-1)) ),
+ 	// 				     logicLaBr3AlCover,
+ 	// 				     "LaBr3AlCover",
+ 	// 				     logicWorld,
+ 	// 				     false,
+ 	// 				     n,
+ 	// 				     true);
+	// }
+	// if(n==22){
+	//   G4RotationMatrix *rotatelabr3 = new G4RotationMatrix();
+	//   // rotatelabr3->rotateY((atan(xpos_1/zpos_1))+pi);
+	//   // rotatelabr3->rotateX((atan(ypos_1/(zpos_1*sqrt(2)))) );
+	//   rotatelabr3->rotateY(225*deg);
+	//   rotatelabr3->rotateX(45*deg);
+
+        // physiLaBr3AlCover = new G4PVPlacement(rotatelabr3,
+	// 				      G4ThreeVector( (fLaBr3xpos_1*(-1)), (fLaBr3ypos_1*(-1)), fLaBr3zpos_1 ),
+ 	// 				     logicLaBr3AlCover,
+ 	// 				     "LaBr3AlCover",
+ 	// 				     logicWorld,
+ 	// 				     false,
+ 	// 				     n,
+ 	// 				     true);
+	// 				     } 
+	// if(n==23){
+	//   G4RotationMatrix *rotatelabr3 = new G4RotationMatrix();
+	//   // rotatelabr3->rotateY((atan(xpos_1/zpos_1)*(-1))-pi+pi);
+	//   // rotatelabr3->rotateX((atan(ypos_1/(zpos_1*sqrt(2)))) );
+	//   rotatelabr3->rotateY(315*deg);
+	//   rotatelabr3->rotateX(45*deg);
+
+
+        // physiLaBr3AlCover = new G4PVPlacement(rotatelabr3,
+	// 				      G4ThreeVector( (fLaBr3xpos_1*(-1)), (fLaBr3ypos_1*(-1)), (fLaBr3zpos_1*(-1)) ),
+ 	// 				     logicLaBr3AlCover,
+ 	// 				     "LaBr3AlCover",
+ 	// 				     logicWorld,
+ 	// 				     false,
+ 	// 				     n,
+ 	// 				     true);
+	// 				     }
+
+	  G4RotationMatrix*rotatelabr3_p1[24];
+	  for (int n = 16; n < 24; n++){
+	    if (n==16){
+	    rotatelabr3_p1[n] = new G4RotationMatrix();
+	    rotatelabr3_p1[n]->rotateY(atan((xpos_1*pow(-1,n>>0))/(zpos_1*pow(-1,n>>1)))*(-1)+pi);
+	    rotatelabr3_p1[n]->rotateX(atan( (ypos_1*pow(-1,n>>2)) / (sqrt( pow(xpos_1, 2.0) + pow(zpos_1, 2.0))) ) *(-1));
+	    }else if (n==17){
+	    rotatelabr3_p1[n] = new G4RotationMatrix();
+	    rotatelabr3_p1[n]->rotateY(atan((xpos_1*pow(-1,n>>0))/(zpos_1*pow(-1,n>>1)))*(-1)+pi);
+	    rotatelabr3_p1[n]->rotateX(atan( (ypos_1*pow(-1,n>>2)) / (sqrt( pow(xpos_1, 2.0) + pow(zpos_1, 2.0))) ) *(-1));
+	    }else if (n==20){
+	    rotatelabr3_p1[n] = new G4RotationMatrix();
+	    rotatelabr3_p1[n]->rotateY(atan((xpos_1*pow(-1,n>>0))/(zpos_1*pow(-1,n>>1)))*(-1)+pi);
+	    rotatelabr3_p1[n]->rotateX(atan( (ypos_1*pow(-1,n>>2)) / (sqrt( pow(xpos_1, 2.0) + pow(zpos_1, 2.0))) ) *(-1));
+	    }else if (n==21){
+	    rotatelabr3_p1[n] = new G4RotationMatrix();
+	    rotatelabr3_p1[n]->rotateY(atan((xpos_1*pow(-1,n>>0))/(zpos_1*pow(-1,n>>1)))*(-1)+pi);
+	    rotatelabr3_p1[n]->rotateX(atan( (ypos_1*pow(-1,n>>2)) / (sqrt( pow(xpos_1, 2.0) + pow(zpos_1, 2.0))) ) *(-1));
+	    }else{
+	    rotatelabr3_p1[n] = new G4RotationMatrix();
+	    rotatelabr3_p1[n]->rotateY(atan((xpos_1*pow(-1,n>>0))/(zpos_1*pow(-1,n>>1)))*(-1));
+	    rotatelabr3_p1[n]->rotateX(atan( (ypos_1*pow(-1,n>>2)) / (sqrt( pow(xpos_1, 2.0) + pow(zpos_1, 2.0))) ) *(-1));
+	    }}
+
+
+       physiLaBr3AlCover = new G4PVPlacement(rotatelabr3_p1[n],
+					     G4ThreeVector( xpos_1*pow(-1,n>>0), ypos_1*pow(-1,n>>2), zpos_1*pow(-1,n>>1) ),
+      					    logicLaBr3AlCover,
+      					    "LaBr3AlCover",
+      					    logicWorld,
+      					    false,
+      					    n,
+					    true);
+
+	} 
+   }
+
   
 
 
@@ -2102,7 +2924,8 @@ G4VPhysicalVolume* e17011_simDetectorConstruction::Construct()
   
   //fCeBr3Scint_zpos = -2.278125*cm;
   //fCeBr3Scint_zpos = -2.02*cm;
-  fCeBr3Scint_zpos = -2.25*cm + (fCeBr3ScintDepth -3*mm)/2.0;
+  //fCeBr3Scint_zpos = -2.25*cm + (fCeBr3ScintDepth -3*mm)/2.0;
+  fCeBr3Scint_zpos = 0*cm;//place at 0,0,0 for now
   G4cout << "fCeBr3Scint_zpos = " << fCeBr3Scint_zpos << G4endl;
   //fCeBr3Scint_zpos += 0.02*cm;
   //fCeBr3Scint_zpos = -2.0*cm;
@@ -2163,7 +2986,7 @@ G4VPhysicalVolume* e17011_simDetectorConstruction::Construct()
       0,
       true);
   
-  }
+    }
 
   fPSPMTVacHeight = fPSPMTHeight - 3*mm;
   fPSPMTVacWidth = fPSPMTWidth - 3*mm; 
@@ -2172,41 +2995,41 @@ G4VPhysicalVolume* e17011_simDetectorConstruction::Construct()
   fPSPMTVacPos = G4ThreeVector(0,0,0);
   solidPSPMTVac = new G4Box("PSPMTVac", fPSPMTVacWidth/2.0, fPSPMTVacHeight/2.0, fPSPMTVacDepth/2.0);
   logicPSPMTVac = new G4LogicalVolume(solidPSPMTVac,VacuumMater,"PSPMTVac",0,0,0);
+  physiPSPMTVac = new G4PVPlacement(0,
+				    fPSPMTVacPos,
+				    logicPSPMTVac,
+				    "PSPMTVac",
+				    logicPSPMT,
+				    false,
+				    0);
 
-  if(fUsePSPMT){
-    physiPSPMTVac = new G4PVPlacement(0,
-				      fPSPMTVacPos,
-				      logicPSPMTVac,
-				      "PSPMTVac",
-				      logicPSPMT,
-				      false,
-				      0);
-  }
 
   solidPSPMTWindow = new G4Box("PSPMTWindow", fPSPMTWindowWidth/2.0, fPSPMTWindowHeight/2.0, fPSPMTWindowDepth/2.0);
   logicPSPMTWindow = new G4LogicalVolume(solidPSPMTWindow, PSPMTWindow_Mater, "PSPMTWindow",0,0,0);
   solidPSPMTCathode = new G4Box("PSPMTCathode", fPSPMTCathodeWidth/2.0, fPSPMTCathodeHeight/2.0, fPSPMTCathodeDepth/2.0);
   logicPSPMTCathode = new G4LogicalVolume(solidPSPMTCathode, PSPMTCathode_Mater, "PSPMTCathode",0,0,0);
 
-  if(fUsePSPMT){
-    physiPSPMTWindow = new G4PVPlacement(0,
-					 G4ThreeVector(innerDet_xpos,innerDet_ypos,fPSPMTWindow_zpos),
-					 logicPSPMTWindow,
-					 "PSPMTWindow",
-					 logicWorld,
-					 false,
-					 0,
-					 true);
-    
-    physiPSPMTCathode = new G4PVPlacement(0,
-					  G4ThreeVector(innerDet_xpos,innerDet_ypos,fPSPMTCathode_zpos),
-					  logicPSPMTCathode,
-					  "PSPMTCathode",
-					  logicWorld,
-					  false,
-					  0,
-					  true);
-  }
+  if(fUsePSPMT)
+    {
+  physiPSPMTWindow = new G4PVPlacement(0,
+				       G4ThreeVector(innerDet_xpos,innerDet_ypos,fPSPMTWindow_zpos),
+				       logicPSPMTWindow,
+				       "PSPMTWindow",
+				       logicWorld,
+				       false,
+				       0,
+				       true);
+
+  physiPSPMTCathode = new G4PVPlacement(0,
+					G4ThreeVector(innerDet_xpos,innerDet_ypos,fPSPMTCathode_zpos),
+					logicPSPMTCathode,
+					"PSPMTCathode",
+					logicWorld,
+					false,
+					0,
+					true);
+    }
+  
   
   //BC - create SiDSSD 
   fSiDSSDHeight = 52*mm;
@@ -2353,7 +3176,7 @@ G4VPhysicalVolume* e17011_simDetectorConstruction::Construct()
   //logicBCSvac->SetVisAttributes(G4VisAttributes::Invisible);
   logicSegaCryo->SetVisAttributes(DetectorVisAtt1);
   logicGeThickDetector->SetVisAttributes(DetectorVisAtt1);
-  logicCloverCryo->SetVisAttributes(G4Colour::Gray());
+  logicCloverCryo->SetVisAttributes(G4Colour::Cyan());
   logicCloverCrystal->SetVisAttributes(G4Colour::Green());
 
   logicGeCryoEndCap->SetVisAttributes(G4Colour::Green());
@@ -2488,4 +3311,5 @@ void e17011_simDetectorConstruction::setGeThinDetectorMaterial(G4String material
              << materialName << G4endl;
      }             
 }
+
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo.....
