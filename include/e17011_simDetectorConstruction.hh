@@ -110,6 +110,7 @@ class e17011_simDetectorConstruction : public G4VUserDetectorConstruction
   // set which external Ge array will be used
      void setUseSega( G4bool value) {fUseSega = value;};
      void setUseClover( G4bool value) {fUseClover = value;};
+  void setUseCloverBracket( G4bool value) {fUseCloverBracket = value;};
 
   // BC - set whether or not the LaBr3 array will be used
      void setUseLaBr3( G4bool value) {fUseLaBr3 = value;}; 
@@ -144,6 +145,9 @@ class e17011_simDetectorConstruction : public G4VUserDetectorConstruction
   // BC - set whether or not beam pipe will be used (e14057 + e16032)
      void setUsePipe( G4bool value) {fUsePipe = value;};
 
+  //TO - face plate
+     void setUsePipeFacePlate( G4bool value) {fUsePipeFacePlate = value;};
+  
   // BC - set whether or not CeBr3 scintillator will be used (e16032)
      void setUseCeBr3Scint( G4bool value) {fUseCeBr3Scint = value;};
   
@@ -237,14 +241,26 @@ class e17011_simDetectorConstruction : public G4VUserDetectorConstruction
      G4Box* solidCloverCryo;                      // pointer to the solid clover cryostat
      G4LogicalVolume* logicCloverCryo;            // pointer to the logical clover cryostat
      G4VPhysicalVolume* physiCloverCryo;          // pointer to the physical clover cryostat
-  
+
      G4Box *solidCloverCryoVac;                   // pointer to the solid clover cryostat vacuum
-     G4LogicalVolume *logicCloverCryoVac;          // pointer to the logical cryostat vacuum
+     G4LogicalVolume *logicCloverCryoVac;         // pointer to the logical cryostat vacuum
      G4VPhysicalVolume* physiCloverCryoVac;       // pointer to the physical cryostat vacuum
+
+
+  G4Box *outbracket;             //pointer to the outerbracket (for use in G4SubtractionSolid)
+  G4Box *innerbracket;           // pointer to inner bracket (for use in G4SubtractionSolid)
+     G4SubtractionSolid *solidCloverBracket;                   // pointer to the solid clover cryostat vacuum
+     G4LogicalVolume *logicCloverBracket;         // pointer to the logical cryostat vacuum
+     G4VPhysicalVolume* physiCloverBracket;       // pointer to the physical cryostat vacuum
+
 
      G4Tubs*            solidBCSpipe;            // pointer to the solid BCSpipe
      G4LogicalVolume*   logicBCSpipe;            // pointer to the logical BCS pipe
      G4VPhysicalVolume* physiBCSpipe;            // pointer to the physical BCS pipe
+
+     G4Tubs*            solidBCSpipefaceplate;            // pointer to the solid BCSpipe
+     G4LogicalVolume*   logicBCSpipefaceplate;            // pointer to the logical BCS pipe
+     G4VPhysicalVolume* physiBCSpipefaceplate;            // pointer to the physical BCS pipe
 
      G4Tubs*            solidBCSvac;            // pointer to the solid BCSvac
      G4LogicalVolume*   logicBCSvac;            // pointer to the logical BCS vac
@@ -389,6 +405,7 @@ class e17011_simDetectorConstruction : public G4VUserDetectorConstruction
      G4Material* SegaVacuumMater;                 // SeGA vacuum material
      G4Material* SegaMater;                       // SeGA material
      G4Material* CloverCryoMater;                 // Clover cryostat material
+     G4Material* CloverBracketMater;              // Clover bracker material
      G4Material* VacuumMater;                     // vacuum material
      G4Material* CloverCrystalMater;              // CLover crystal material
      G4Material* BCSdssdMater;                    // DSSD material
@@ -430,6 +447,12 @@ class e17011_simDetectorConstruction : public G4VUserDetectorConstruction
      G4double fPipeInRad;                         // Inner radius of the e14057 detector pipe
      G4double fPipeLength;                        // Length of the e14057 detector pipe
 
+     G4double fPipeFacePlateOutRad;                        // Outer radius of the e14057 detector pipe
+     G4double fPipeFacePlateInRad;                        // Outer radius of the e14057 detector pipe
+    G4double fPipeFacePlateDepth;                        // Length of the e14057 detector pipe
+    G4double fPipe_zpos;
+    G4double fPipeFacePlate_zpos;  
+
      G4double fSpacing;                           //Interdetector spacing
 
      G4bool fUseGeThinDetector;                   //flag to determine if thin detector is used
@@ -438,6 +461,7 @@ class e17011_simDetectorConstruction : public G4VUserDetectorConstruction
      G4bool fUseGeThickDetectorCryoEndCap;        //flag to determine if detector endcapis used
      G4bool fUseSega;                             //flag to determine if SeGA is used
      G4bool fUseClover;                           //flag to determine if Clover is used
+  G4bool fUseCloverBracket;                       // flag to determine if Clover Bracket is used
      G4bool fUseLaBr3;                            //flag to determine if LaBr3 is used
      G4bool fUseLaBr3Frame;                       //flag to determine if LaBr3 frame is used
      G4bool fUse3Hen;                             //flag to determine if 3Hen is used
@@ -449,6 +473,7 @@ class e17011_simDetectorConstruction : public G4VUserDetectorConstruction
      G4bool fUsePSPMT;                            //flag to determine if PSPMT is used
      G4bool fUseSiDSSD;                           //flag to determine if SiDSSD is used
      G4bool fUsePipe;                             //flag to determine if beam pipe is used
+     G4bool fUsePipeFacePlate;                             //flag to determine if beam pipe is used
      G4bool fUseCeBr3Scint;                       //flag to determine if CeBr3 Scint is used
 
 
@@ -495,6 +520,8 @@ class e17011_simDetectorConstruction : public G4VUserDetectorConstruction
      G4ThreeVector CloverCryoPos;                 // location of the Clover cry in the world
      G4ThreeVector CloverCryoVacuumPos;           // location of the CloverSS vacuum inside the cryostat
 
+     G4ThreeVector CloverBracketPos;              //location of the brackets for Clovers
+
      //BC - LaBr3 array constants needed
      G4double flabr3cryslength;                   // The length of the LaBr3 scintillator crystal
      G4double flabr3crysthick;                    // The thickness of the LaBr3 scintillator crystal
@@ -511,6 +538,16 @@ class e17011_simDetectorConstruction : public G4VUserDetectorConstruction
      G4double flabr3framethick;                   // The thickness of the LaBr3 frame
      G4double flabr3frameinrad;                   // The inner radius of the LaBr3 frame
      G4double flabr3frameoutrad;                  // The outer radius of the LaBr3 frame
+
+
+  G4double CloverBracketLength;
+  G4double CloverBracketThickness;
+  G4double CloverBracketOutx;
+  G4double CloverBracketOuty;
+  G4double CloverBracketOutz;
+  G4double CloverBracketInx;
+  G4double CloverBracketIny;
+  G4double CloverBracketInz;
      
      
      //BC - 3Hen constants as defined in http://www.phy.ornl.gov/hribf/equipment/leribss/3hen-prop.pdf
