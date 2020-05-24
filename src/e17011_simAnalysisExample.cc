@@ -934,7 +934,17 @@ void e17011_simAnalysisExample::BeginOfRunAction(const G4Run */*aRun*/, G4int ra
   
   
 
-  for(G4int x=0;x<72;x++){
+  // for(G4int x=0;x<36;x++){
+  //   stringstream temptitle;
+  //   temptitle << "hEnergyDepositClover_" << x;
+  //   string title = temptitle.str();
+  //   if(hEnergyDepositClover[x]) hEnergyDepositClover[x]->Reset();
+  //   else {
+  //     hEnergyDepositClover[x] = new TH1D(title.c_str(),title.c_str(),5500,0,5500);
+  //   }
+  // }
+
+    for(G4int x=0;x<72;x++){
     stringstream temptitle;
     temptitle << "hEnergyDepositClover_" << x;
     string title = temptitle.str();
@@ -1090,8 +1100,31 @@ void e17011_simAnalysisExample::BeginOfRunAction(const G4Run */*aRun*/, G4int ra
     hClover = new TH1D("hClover","hClover", 5500, 0.0, 5500); // in degrees
   }
 
+  hClover_gg = (TH2D *)gROOT->FindObject("hClover_gg");
+  if (hClover_gg) hClover_gg->Reset();
+  else{
+    hClover_gg = new TH2D("hClover_gg","hClover_gg",5000,0,5000,5000,0,5000);
+  }
 
-  for(G4int x=0;x<18;x++){
+  hClover_gg_esum = (TH2D *)gROOT->FindObject("hClover_gg_esum");
+  if (hClover_gg_esum) hClover_gg_esum->Reset();
+  else{
+    hClover_gg_esum = new TH2D("hClover_gg_esum","hClover_gg_esum",5000,0,5000,5000,0,5000);
+  }
+
+
+  // for(G4int x=0;x<9;x++){
+  //   stringstream temptitle;
+  //   temptitle << "hEnergyDepositClover_addback_" << x;
+  //   string title = temptitle.str();
+  //   if(hEnergyDepositClover_addback[x]) hEnergyDepositClover_addback[x]->Reset();
+  //   else {
+  //     hEnergyDepositClover_addback[x] = new TH1D(title.c_str(),title.c_str(),5500,0,5500);
+  //   }
+  // }
+
+
+    for(G4int x=0;x<18;x++){
     stringstream temptitle;
     temptitle << "hEnergyDepositClover_addback_" << x;
     string title = temptitle.str();
@@ -1100,6 +1133,7 @@ void e17011_simAnalysisExample::BeginOfRunAction(const G4Run */*aRun*/, G4int ra
       hEnergyDepositClover_addback[x] = new TH1D(title.c_str(),title.c_str(),5500,0,5500);
     }
   }
+    
   // gamma angular correlation from "experiment"
   hClover_addback = (TH1D *)gROOT->FindObject("hClover_addback");
   if (hClover_addback) hClover_addback->Reset();
@@ -1201,14 +1235,17 @@ void e17011_simAnalysisExample::EndOfRunAction(const G4Run */*aRun*/, G4int rank
   c1->Write();
 
   TCanvas *c2 = new TCanvas("c2","c2",1);
-  c2->Divide(2,5);
-  for(int i =1;i<10;i++){
+  // c2->Divide(2,5);
+  // for(int i =1;i<10;i++){
+  c2->Divide(3,6);
+  for(int i =1;i<19;i++){
     c2->cd(i);
     hEnergyDepositClover_addback[i-1]->GetXaxis()->SetLabelSize(0.06);
     hEnergyDepositClover_addback[i-1]->GetYaxis()->SetLabelSize(0.06);
     hEnergyDepositClover_addback[i-1]->Draw();
   }
-  c2->cd(10);
+  //c2->cd(10);
+  c2->cd(19);
   hClover_addback->GetXaxis()->SetLabelSize(0.06);
   hClover_addback->GetYaxis()->SetLabelSize(0.06);
   hClover_addback->Draw();
@@ -2129,11 +2166,20 @@ void e17011_simAnalysisExample::EndOfEventAction(const G4Event *evt)
     
     //cout << "in clover " << endl;
 
+    // G4double CloverE[36];
+    // G4double CloverE_addback[9];
     G4double CloverE[72];
     G4double CloverE_addback[18];
     G4double totE = 0;
     G4double CloverAdd =0;
     G4int crysno;
+    // for(int x=0;x<36;x++){
+    //   CloverE[x]=0;
+    // }
+    // for(int x=0;x<9;x++){
+    //   CloverE_addback[x]=0;
+    // }
+
     for(int x=0;x<72;x++){
       CloverE[x]=0;
     }
@@ -2169,6 +2215,7 @@ void e17011_simAnalysisExample::EndOfEventAction(const G4Event *evt)
       
       // add a resolution to the clover energy
       //  int count=0;
+      // for(int x=0;x<36;x++){
       for(int x=0;x<72;x++){
 	      if(CloverE[x]>0){
 	        //  count++;
@@ -2184,15 +2231,18 @@ void e17011_simAnalysisExample::EndOfEventAction(const G4Event *evt)
 	      }
       }
 
+      //for(int x=0;x<36;x++){
       for(int x=0;x<72;x++){
 	      if(CloverE[x]>0){
 	        CloverE_addback[x/4] += CloverE[x]; 
 	      }
       }
       //  double max =0; 
+      double esum = 0;
+      //for(int x=0;x<36;x++){
       for(int x=0;x<72;x++){
 	      //cout << "energy " << x << " " << CloverE[x] << endl;
-	      if(CloverE[x]>0){
+	      if(CloverE[x]>=1){
 	        //cout << "filling " << endl;
 	        //  if(count<3){
 	        // if(CloverE[x]>max) max = CloverE[x];
@@ -2200,20 +2250,39 @@ void e17011_simAnalysisExample::EndOfEventAction(const G4Event *evt)
 	        hEnergyDepositClover[x]->Fill(CloverE[x]);//energy of each ind. crystal
 	        hClover->Fill(CloverE[x]);//energy from all crystals
 	        //	  }
-	        //increment only for specific energies so that they may be used as efficiencies
-	        /* if((CloverE[x]>3984)&&(CloverE[x]<4015)){
-	          hEnergyDepositClover[x]->Fill(CloverE[x]);
-	          hClover->Fill(x);
-	          }*/
-	        //  hEnergyDeposit->Fill(CloverE[x]);//trying to make spectrum with both clover and gedssd events
-	        //	hsega_tigress_s->Fill(CloverE[x]);
-	        // }
-	  
+	        
+
+		//do a gamma gamma with the clover crystals
+		//for(int y = x+1; y < 36; y++){
+		for(int y = x+1; y < 72; y++){
+		  if(CloverE[y] >= 1){
+		    hClover_gg->Fill(CloverE[x],CloverE[y]);
+		    hClover_gg->Fill(CloverE[y],CloverE[x]);
+		  }
+		}
+
+		//add in the gamma ray singles spectrum at the 0 bins 
+		//of the x and y axis of hClover_gg
+		hClover_gg->Fill(0.0,CloverE[x]);
+		hClover_gg->Fill(CloverE[x],0.0);
+		esum = esum + CloverE[x];
+
 	      }//end if CloverE>0
 	      //cout << "end loop " << endl;
       }//end Clover for
+      //now fill clover with esum info
+      //hClover_gg_esum->Fill(0.0,esum);
+      // for(int x = 0; x < 36; x++){
+      for(int x = 0; x < 72; x++){
+	if(CloverE[x] > 0){
+	  hClover_gg_esum->Fill(CloverE[x],esum);
+	  hClover_gg_esum->Fill(CloverE[x],0.0);
+	}
+      }
+      hClover_gg_esum->Fill(0.0,esum);
       // hClover->Fill(max);
       //  double max2;
+      //for(int x=0;x<9;x++){
       for(int x=0;x<18;x++){
 	      if(CloverE_addback[x]>0){
 	        // if(CloverE_addback[x]>max2) max2 =CloverE_addback[x];
