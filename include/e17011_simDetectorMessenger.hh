@@ -68,6 +68,7 @@ class e17011_simDetectorMessenger: public G4UImessenger
     G4UIcmdWithABool*          UseGeThickDetectorCryoEndCapCmd;
     G4UIcmdWithABool*          UseSegaCmd;
     G4UIcmdWithABool*          UseCloverCmd;
+    G4UIcmdWithABool*          UseCloverBracketCmd;  // for Clover Bracket
 
     G4UIcmdWithABool*          UseLaBr3Cmd;  //BC - LaBr3
     G4UIcmdWithABool*          UseLaBr3FrameCmd;  //BC - LaBr3 Frame
