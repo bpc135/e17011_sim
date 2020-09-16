@@ -116,6 +116,11 @@ e17011_simDetectorMessenger::e17011_simDetectorMessenger(e17011_simDetectorConst
   UseCloverCmd->SetParameterName("choice",false);
   UseCloverCmd->AvailableForStates(G4State_PreInit);
 
+  UseCloverBracketCmd = new G4UIcmdWithABool("/e17011_sim/det/UseCloverBracket",this);
+  UseCloverBracketCmd->SetGuidance("activate Clover Bracket");
+  UseCloverBracketCmd->SetParameterName("choice",false);
+  UseCloverBracketCmd->AvailableForStates(G4State_PreInit);
+
   // BC - use LaBr3 
 
   UseLaBr3Cmd = new G4UIcmdWithABool("/e17011_sim/det/UseLaBr3",this);
@@ -212,6 +217,7 @@ e17011_simDetectorMessenger::~e17011_simDetectorMessenger()
   delete UseGeThickDetectorCryoEndCapCmd;
   delete UseSegaCmd;
   delete UseCloverCmd;
+  delete UseCloverBracketCmd;
   delete detDir;
   delete e17011_simDir;
   delete UseLaBr3Cmd;
@@ -259,6 +265,8 @@ void e17011_simDetectorMessenger::SetNewValue(G4UIcommand* command,G4String newV
     { myDetector->setUseSega(UseSegaCmd->GetNewBoolValue(newValue));}
   else if (command == UseCloverCmd ) 
     { myDetector->setUseClover(UseCloverCmd->GetNewBoolValue(newValue));}
+  else if (command == UseCloverBracketCmd )
+    { myDetector ->setUseCloverBracket(UseCloverBracketCmd->GetNewBoolValue(newValue));}
   else if (command == UseLaBr3Cmd )
     { myDetector->setUseLaBr3(UseLaBr3Cmd->GetNewBoolValue(newValue));}
   else if (command == UseLaBr3FrameCmd )
