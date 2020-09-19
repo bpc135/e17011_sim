@@ -1322,6 +1322,7 @@ G4VPhysicalVolume* e17011_simDetectorConstruction::Construct()
   //fPipeLength = 39.6875*cm;
 
   fPipeFacePlateOutRad = 5.715*cm;//should be the same as the actual pipe radius
+  fPipeFacePlateInRad = 0.000*cm;
   fPipeFacePlateDepth = 0.025*cm;
 
 
